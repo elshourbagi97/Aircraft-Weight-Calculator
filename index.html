@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aircraft Weight Calculator</title>
+<style>
+:root{--bg:#eef3f8;--card:#fff;--ink:#172338;--muted:#64748b;--line:#dce5ef;--blue:#1769e0;--navy:#102b50;--green:#087f5b}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#eaf2fb,#f7f9fc);font-family:Arial, sans-serif;color:var(--ink);min-height:100vh;padding:28px 16px}
+main{max-width:900px;margin:auto}.top{background:linear-gradient(120deg,#102b50,#1769e0);color:white;padding:28px;border-radius:20px 20px 0 0}
+.top h1{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.top p{margin:0;color:#dbeafe}
+.card{background:var(--card);padding:26px;border:1px solid var(--line);border-top:0;border-radius:0 0 20px 20px;box-shadow:0 16px 40px #18365b12}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.field{display:flex;flex-direction:column;gap:8px}.field label{font-weight:700;font-size:14px}
+input,select{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--ink);font-size:16px;outline:none}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #1769e020}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}.aircraft-weight{background:#f1f6fd;border:1px solid #d7e6fa;border-radius:10px;padding:13px 14px;font-weight:700;color:#174a89;min-height:47px}
+.fuel-row{display:grid;grid-template-columns:1fr 120px;gap:9px}.results{margin-top:24px;background:#f7fafc;border:1px solid var(--line);border-radius:16px;padding:20px}
+.results h2{margin:0 0 15px;font-size:19px}.result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.result{background:white;border:1px solid var(--line);border-radius:12px;padding:16px}.result small{display:block;color:var(--muted);margin-bottom:8px}.result strong{font-size:clamp(24px,4vw,32px);font-variant-numeric:tabular-nums}
+.result.primary{background:#eaf2ff;border-color:#c7dcff}.result.primary strong{color:#1257bd}.breakdown{margin-top:16px;color:#475569;font-size:14px;line-height:1.8}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;cursor:pointer}
+.reset{background:#e8eef6;color:#26364b}.print{background:var(--blue);color:white}
+.footer{margin-top:18px;color:var(--muted);font-size:12px;line-height:1.6}
+@media(max-width:620px){body{padding:12px 10px}.top,.card{padding:20px}.grid,.result-grid{grid-template-columns:1fr}.fuel-row{grid-template-columns:1fr 105px}}
+@media print{body{background:white;padding:0}.top{border-radius:0}.card{box-shadow:none}.actions{display:none}}
+</style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#102b50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aircraft Weight">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
+</head>
+<body>
+<main>
+  <header class="top">
+    <h1>Aircraft Weight Calculator</h1>
+    <p>Offline calculator · حاسبة أوزان الطائرات</p>
+  </header>
+  <section class="card">
+    <div class="grid">
+      <div class="field">
+        <label for="aircraft">Select the A/C No.</label>
+        <select id="aircraft"><option value="">Choose aircraft number</option></select>
+        <div class="hint">Aircraft weight is loaded automatically from your aircraft weight sheet.</div>
+      </div>
+      <div class="field">
+        <label>Aircraft Weight</label>
+        <div class="aircraft-weight" id="aircraftWeight">— kg</div>
+      </div>
+      <div class="field">
+        <label for="fuel">Fuel amount</label>
+        <input id="fuel" type="number" min="0" step="any" placeholder="Enter fuel amount" inputmode="decimal">
+        <div class="hint" id="fuelHint">Enter fuel quantity in liters. Fuel kg = liters × 0.76.</div>
+      </div>
+      <div class="field">
+        <label for="fuelUnit">Fuel unit</label>
+        <select id="fuelUnit">
+          <option value="liters">Liters (L)</option>
+          <option value="kg">Kilograms (kg)</option>
+        </select>
+        <div class="hint">Fuel density used for liters: 0.76 kg/L.</div>
+      </div>
+      <div class="field">
+        <label for="extra">Select additional item</label>
+        <select id="extra">
+          <option value="0">None — 0 kg</option>
+          <option value="57">BA — 57 kg</option>
+          <option value="58">TL — 58 kg</option>
+          <option value="21">L of (TL) — 21 kg</option>
+          <option value="11">L of BA — 11 kg</option>
+        </select>
+        <div class="hint">Choose one item; its weight will be added automatically.</div>
+      </div>
+      <div class="field">
+        <label>Conversion factor</label>
+        <div class="aircraft-weight">1 kg = 2.205 lb</div>
+        <div class="hint">The result in pounds is calculated automatically.</div>
+      </div>
+    </div>
+
+    <section class="results" aria-live="polite">
+      <h2>Calculation Results</h2>
+      <div class="result-grid">
+        <div class="result">
+          <small>Total weight (KG)</small>
+          <strong id="totalKg">0.00 kg</strong>
+        </div>
+        <div class="result primary">
+          <small>Total weight (POUND)</small>
+          <strong id="totalLb">0.00 lb</strong>
+        </div>
+      </div>
+      <div class="breakdown" id="breakdown">Select an aircraft and enter the fuel amount to calculate.</div>
+    </section>
+    <div class="actions">
+      <button class="reset" id="reset" type="button">Reset calculation</button>
+      <button class="print" id="print" type="button">Print result</button>
+    </div>
+    <div class="footer">
+      Reference aircraft weights were transcribed from the supplied sheet. Please verify the aircraft number and operational figures against the current approved aircraft documentation before using any result for operational or safety-critical decisions.
+    </div>
+  </section>
+</main>
+<script>
+const aircraftWeights = {
+  "4901":946.3, "4903":958.4, "4904":916.5, "4905":955, "4907":918.5,
+  "4908":null, "4909":914, "4910":921, "4911":921, "4912":969,
+  "4913":958.4, "4914":921, "4916":910, "4917":917, "4918":912,
+  "4923":null, "4924":954, "4925":951, "4926":null, "4927":959,
+  "4928":963, "4929":961.5, "4930":950, "4931":960, "4932":959,
+  "4933":952.5, "4934":961, "4935":964.9, "4936":959, "4937":957,
+  "4938":953
+};
+const $ = id => document.getElementById(id);
+const aircraft = $("aircraft"), fuel = $("fuel"), fuelUnit = $("fuelUnit"), extra = $("extra");
+Object.entries(aircraftWeights).forEach(([number, weight]) => {
+  const option = document.createElement("option");
+  option.value = number;
+  option.textContent = number + " — " + (weight === null ? "Weight unavailable" : weight + " kg");
+  aircraft.appendChild(option);
+});
+function fmt(n){return n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function calculate(){
+  const aWeight = aircraftWeights[aircraft.value];
+  const hasAircraftWeight = aircraft.value !== "" && aWeight !== null && aWeight !== undefined;
+  const rawFuel = Math.max(0, Number(fuel.value) || 0);
+  const fuelKg = fuelUnit.value === "liters" ? rawFuel * 0.76 : rawFuel;
+  const extraKg = Number(extra.value) || 0;
+  const total = hasAircraftWeight ? aWeight + fuelKg + extraKg : null;
+  $("aircraftWeight").textContent = hasAircraftWeight ? fmt(aWeight) + " kg" : "— kg";
+  $("totalKg").textContent = total === null ? "—" : fmt(total) + " kg";
+  $("totalLb").textContent = total === null ? "—" : fmt(total * 2.205) + " lb";
+  if(!aircraft.value){
+    $("breakdown").textContent = "Select an aircraft and enter the fuel amount to calculate.";
+  } else if (!hasAircraftWeight) {
+    $("breakdown").textContent = "No aircraft weight is listed for aircraft " + aircraft.value + " in the supplied sheet. Calculation is unavailable until its weight is confirmed.";
+  } else {
+    const unitText = fuelUnit.value === "liters" ? "L" : "kg";
+    const fuelText = fuelUnit.value === "liters"
+      ? `${fmt(rawFuel)} L × 0.76 = ${fmt(fuelKg)} kg`
+      : `${fmt(rawFuel)} kg = ${fmt(fuelKg)} kg`;
+    const extraLabel = extra.options[extra.selectedIndex].text;
+    $("breakdown").innerHTML =
+      `Aircraft: ${aircraft.value} = ${fmt(aWeight)} kg<br>`+
+      `Fuel: ${fuelText}<br>`+
+      `Additional item: ${extraLabel}<br>`+
+      `<b>${fmt(aWeight)} + ${fmt(fuelKg)} + ${fmt(extraKg)} = ${fmt(total)} kg</b><br>`+
+      `${fmt(total)} × 2.205 = <b>${fmt(total*2.205)} lb</b>`;
+  }
+  $("fuelHint").textContent = fuelUnit.value === "liters"
+    ? "Enter fuel quantity in liters. Fuel kg = liters × 0.76."
+    : "Enter the fuel weight directly in kilograms.";
+}
+[aircraft,fuel,fuelUnit,extra].forEach(el=>el.addEventListener("input",calculate));
+$("reset").addEventListener("click",()=>{aircraft.value="";fuel.value="";fuelUnit.value="liters";extra.value="0";calculate();});
+$("print").addEventListener("click",()=>window.print());
+calculate();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(err => {
+      console.error("Offline support registration failed:", err);
+    });
+  });
+}
+</script>
+</body>
+</html>
